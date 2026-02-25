@@ -80,4 +80,4 @@ md = Metadata(
 )
 ```
 
-Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the EoS under consideration. Also, based on the utility of PyCompOSE, only `.h5`, `.athtab`, and `.lorene` formats are supported, which work with a multiude of codes.
+Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the EoS under consideration. Also, based on the utility of PyCompOSE, only `.h5`, `.athtab`, and `.lorene` formats are supported, which work with a multitude of codes.
