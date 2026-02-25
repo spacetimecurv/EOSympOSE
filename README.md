@@ -80,4 +80,4 @@ md = Metadata(
 )
 ```
 
-Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the given EoS.
+Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the EoS under consideration.
