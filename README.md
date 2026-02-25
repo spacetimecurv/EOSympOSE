@@ -66,3 +66,18 @@ If you also wish to have `SLy_NQT.athtab`, then use the script `hdf5toathtab.py`
 ```python hdf5toathtab.py --input /path/to/SLy_NQT.h5 --output /path/to/SLy_NQT.athtab```
 
 
+## Other EoSs
+Currently, only the SLy, DD2, and SFHo EoS are given here. If you wish to convert other CompOSE tables not listed here, then use the given scripts as a template and only change the URL as described above and the metatable with the particle species:  
+
+```python
+md = Metadata(
+    pairs = {
+        0: ("e", "electron"),
+        10: ("n", "neutro"),
+        11: ("p", "proton"),
+        4002: ("He4", "alpha particle")
+    }
+)
+```
+
+Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the given EoS.
