@@ -1,79 +1,97 @@
 # EOSympOSE
-EOSympOSE is an easy-to-use extension of PyCompOSE (https://github.com/computationalrelativity/PyCompOSE), which is used to convert CompOSE (https://compose.obspm.fr/home/) equations of state into readable format for numerical relativity codes and initial data solvers. 
+EOSympOSE is an easy-to-use extension of PyCompOSE (https://github.com/computationalrelativity/PyCompOSE), which is used to convert CompOSE (https://compose.obspm.fr/home/) equations of state into readable format for numerical relativity codes and initial data solvers.
 
 EOSympOSE will automatically fetch the respective data from the CompOSE database and use the PyCompOSE tools to convert the data to the desired format. Examples for this also exists on the PyCompOSE repository, but here they are automatized for easy use-case and without downloading the data manually.
 
 ## Setting up PyCompOSE
-Before using the scripts in this repository, the PyCompOSE utilities have to be cloned from https://github.com/computationalrelativity/PyCompOSE via:  
+Before using the scripts in this repository, the PyCompOSE utilities have to be cloned from https://github.com/computationalrelativity/PyCompOSE via:
 
 ```git clone https://github.com/computationalrelativity/PyCompOSE```
 
-To use all of the functionalities, such as NQTs, we have to make use of `setup.py` to build the NQT library. To do so, type the following inside of the root directory of PyCompOSE:  
+To use all of the functionalities, such as NQTs, we have to make use of `setup.py` to build the NQT library. To do so, type the following inside of the root directory of PyCompOSE:
 
 ```pip install -e .```
 
-This will build the library and enables all the functionality we might need. Lastly, inside of the PyCompOSE root directory, create a folder called `scripts` or whatever other name you like. After changing into the `scripts` folder, clone the EOSympOSE repository by typing:  
+This will build the library and enables all the functionality we might need. Lastly, inside of the PyCompOSE root directory, create a folder called `scripts` or whatever other name you like. After changing into the `scripts` folder, clone the EOSympOSE repository by typing:
 
 ```git clone https://github.com/spacetimecurv/EOSympOSE.git```
 
 ## Usage
-Choose the script for the EoS that you want to convert, e.g. `SLy/SLy.py`. For running, you have some options:  
+There is a single script, `eos.py`, which works for every EoS. Everything that is specific to an EoS (the CompOSE ID and the particle species entering the metatable) is not hardcoded, but read from the configuration file `eos_config.json`. For running, you have some options:
 
-- eos_name: the name of the EoS, used for naming the files and directory (required)  
-- output_dir: the path to the directory, where the converted files and the CompOSE data are supposed to be stored (required)  
-- hdf5: flag for hdf5 output (false, if not specified)  
-- athtab: flag for athtab output (false, if not specified)  
-- lorene: flag for lorene output (false, if not specified)  
-- eos_cold: if a cold beta-equilibrium 1D temperature slice of a 3D table shall be created (works for 3D tables only)  
+- eos_name: the name of the EoS as listed in the configuration file, also used for naming the files and directory (required)
+- output_dir: the path to the directory, where the converted files and the CompOSE data are supposed to be stored (required)
+- config: path to the JSON file holding the EoS definitions (`eos_config.json` next to `eos.py`, if not specified)
+- list_eos: list the EoSs available in the configuration file and exit
+- hdf5: flag for hdf5 output (false, if not specified)
+- athtab: flag for athtab output (false, if not specified)
+- lorene: flag for lorene output (false, if not specified)
+- eos_cold: if a cold beta-equilibrium 1D temperature slice of a 3D table shall be created (works for 3D tables only)
 - nqt: flag for nqt output (false, if not specified)
 
-If you desire the entire output, that is possible, the command would look like:  
+To see which EoSs are currently defined, type:
 
-```python SLy.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt```
+```python eos.py --list_eos```
 
-This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `ATHTAB` (holding the converted tables to .athtab format), `HDF5` (holding the converted tables to .h5 format) and `LORENE` (holding the converted tables to .lorene format and number fractions).  
+If you desire the entire output, that is possible, the command would look like:
 
-Then the program will fetch the data from the CompOSE library. For the example of the `SLy` EoS, we use the data under https://compose.obspm.fr/eos/141. Inside `SLy/SLy.py` we fetch and unzip the data with:  
+```python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt```
 
-```python
-url = "https://compose.obspm.fr/download//3D/SRO/SLy4/eos.zip"
-compose_path = Path(os.path.join(eos_path, "compose"))
-create_directory(compose_path) # create the folder with the compose data
-    
-# check whether there is already data present, otherwise fetch data
-has_files = any(compose_path.iterdir())
-if has_files: 
-for file in compose_path.iterdir():  # iterates over all entries
-  if file.is_file():               # only delete files, not subdirs
-    file.unlink() 
-get_data(url, compose_path) # fetch the data
+This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `athtab` (holding the converted tables to .athtab format), `hdf5` (holding the converted tables to .h5 format) and `lorene` (holding the converted tables to .lorene format and number fractions).
 
-# unzip the data
-subprocess.run(["unzip", f"{compose_path / "eos.zip"}", "-d", f"{compose_path}"], check=True)
-os.remove(compose_path / "eos.zip")
+Then the program will fetch the data from the CompOSE library, using the CompOSE ID of the chosen EoS from `eos_config.json`. For the example of the `SLy` EoS, we use the data under https://compose.obspm.fr/eos/141, so the ID is 141 and the entry reads:
+
+```json
+"SLy": {
+    "id": 141,
+    "pairs": {
+        "0": ["e", "electron"],
+        "10": ["n", "neutron"],
+        "11": ["p", "proton"],
+        "4002": ["He4", "alpha particle"]
+    },
+    "quads": {},
+    "fix_electron_fraction": true
+}
 ```
-The URL to the `eos.zip` file can be obtained by visiting https://compose.obspm.fr/eos/141, entering developer mode with F12, changing to the `Network` tab and then clicking on the download button for `eos.zip`. In the `Network` tab, we will now see the URL by clicking on the request. In case of an older URL, 
-follow these steps to change it or download the data manually. The unzipped data will now be stored inside `compose`.  
+The ID is simply the number at the end of the webpage of the EoS. The script visits that webpage, reads the download folder of the table off of it and then fetches the files `eos.nb`, `eos.t`, `eos.yq`, `eos.thermo`, `eos.compo`, `eos.micro`, `eos.init`, `eos.mr` and `eos.pdf` one by one. Files that a table does not offer are skipped. The data will be stored inside `compose`.
 
-If all options were enabled, you will see the following files in the respective folders:  
+If all options were enabled, you will see the following files in the respective folders:
 
-- ATHTAB: `SLy_T0.1_beta.athtab` (1D temperature slice), `SLy.athtab` (full 3D table)
-- HDF5: `SLy_NQT.h5` (NQT format), `SLy_T0.1_beta.h5` (1D temperature slice), `SLy.h5` (full 3D table)
-- LORENE: `SLy_T0.1_beta.lorene` (1D temperature slice in Lorene format), `SLy_T0.1_beta_Y.out` (table with the number fractions)
+- athtab: `SLy_T0.1_beta.athtab` (1D temperature slice), `SLy.athtab` (full 3D table), `SLy_NQT.athtab` (NQT format)
+- hdf5: `SLy_NQT.h5` (NQT format), `SLy_T0.1_beta.h5` (1D temperature slice), `SLy.h5` (full 3D table)
+- lorene: `SLy_T0.1_beta.lorene` (1D temperature slice in Lorene format), `SLy_T0.1_beta_Y.out` (table with the number fractions)
 
-If you also wish to have `SLy_NQT.athtab`, then use the script `hdf5toathtab.py` under https://github.com/jfields7/table-reader/tree/main/tools to convert `SLy_NQT.h5` into `.athtab` format. For this, type:  
-
-```python hdf5toathtab.py --input /path/to/SLy_NQT.h5 --output /path/to/SLy_NQT.athtab```
+The NQT table is created directly from the table in memory, so `--nqt` writes it in whichever of the `--hdf5` and `--athtab` formats are enabled.
 
 
 ## Other EoSs and data formats
-Currently, only the SLy, DD2, and SFHo EoS are given here. If you wish to convert other CompOSE tables not listed here, then use the given scripts as a template and only change the URL as described above and the metatable with the particle species:  
+Currently, the SLy, DD2, and SFHo EoS are defined in `eos_config.json`. If you wish to convert other CompOSE tables not listed there, then no just add another entry to the configuration file, with the CompOSE ID of the table and the particle species of the metatable. The keys of an entry are:
+
+- id: the CompOSE ID of the EoS, i.e. the number at the end of its webpage (required, the full URL of the webpage works as well)
+- pairs: the particles of the metatable, as `"index": ["name", "description"]` (optional)
+- quads: the isotopes of the metatable, in the same format (optional)
+- micro: the microphysics quantities of the metatable, in the same format (optional)
+- fix_electron_fraction: sets the electron fraction to the charge fraction, needed for tables such as SLy (false, if not specified)
+
+Note that JSON requires the indices to be quoted, they are cast back to integers when the metatable is built. An entry with the species
+
+```json
+"pairs": {
+    "0": ["e", "electron"],
+    "10": ["n", "neutron"],
+    "11": ["p", "proton"],
+    "4002": ["He4", "alpha particle"]
+}
+```
+
+therefore results in the metatable
 
 ```python
 md = Metadata(
     pairs = {
         0: ("e", "electron"),
-        10: ("n", "neutro"),
+        10: ("n", "neutron"),
         11: ("p", "proton"),
         4002: ("He4", "alpha particle")
     }

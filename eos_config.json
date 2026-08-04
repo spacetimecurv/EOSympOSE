@@ -1,0 +1,43 @@
+{
+    "DD2": {
+        "id": 18,
+        "pairs": {
+            "0": ["e", "electron"],
+            "10": ["n", "neutron"],
+            "11": ["p", "proton"],
+            "4002": ["He4", "alpha particle"],
+            "3002": ["He3", "helium 3"],
+            "3001": ["H3", "tritium"],
+            "2001": ["H2", "deuteron"]
+        },
+        "quads": {
+            "999": ["N", "average nucleous"]
+        }
+    },
+    "SFHo": {
+        "id": 34,
+        "pairs": {
+            "0": ["e", "electron"],
+            "10": ["n", "neutron"],
+            "11": ["p", "proton"],
+            "4002": ["He4", "alpha particle"],
+            "3002": ["He3", "helium 3"],
+            "3001": ["H3", "tritium"],
+            "2001": ["H2", "deuteron"]
+        },
+        "quads": {
+            "999": ["N", "average nucleous"]
+        }
+    },
+    "SLy": {
+        "id": 141,
+        "pairs": {
+            "0": ["e", "electron"],
+            "10": ["n", "neutron"],
+            "11": ["p", "proton"],
+            "4002": ["He4", "alpha particle"]
+        },
+        "quads": {},
+        "fix_electron_fraction": true
+    }
+}
