@@ -26,6 +26,9 @@ There is a single script, `eos.py`, which works for every EoS. Everything that i
 - hdf5: flag for hdf5 output (false, if not specified)
 - athtab: flag for athtab output (false, if not specified)
 - lorene: flag for lorene output (false, if not specified)
+- elliptica: flag for elliptica output (false, if not specified)
+- elliptica_format: which format to write the elliptica table in ("compose"/"geometric"; works only with the elliptica flag)
+- elliptica_dcut: density cut for the elliptica table in either format (works only with the elliptica flag)
 - eos_cold: if a cold beta-equilibrium 1D temperature slice of a 3D table shall be created (works for 3D tables only)
 - nqt: flag for nqt output (false, if not specified)
 
@@ -35,9 +38,9 @@ To see which EoSs are currently defined, type:
 
 If you desire the entire output, that is possible, the command would look like:
 
-```python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt```
+```python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt --elliptica --elliptica_format compose --elliptica_dcut -1.0```
 
-This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `athtab` (holding the converted tables to .athtab format), `hdf5` (holding the converted tables to .h5 format) and `lorene` (holding the converted tables to .lorene format and number fractions).
+This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `athtab` (holding the converted tables to .athtab format), `hdf5` (holding the converted tables to .h5 format), `lorene` (holding the converted tables to .lorene format and number fractions), and `elliptica` (holding the elliptica tables).
 
 Then the program will fetch the data from the CompOSE library, using the CompOSE ID of the chosen EoS from `eos_config.json`. For the example of the `SLy` EoS, we use the data under https://compose.obspm.fr/eos/141, so the ID is 141 and the entry reads:
 
@@ -61,6 +64,7 @@ If all options were enabled, you will see the following files in the respective 
 - athtab: `SLy_T0.1_beta.athtab` (1D temperature slice), `SLy.athtab` (full 3D table), `SLy_NQT.athtab` (NQT format)
 - hdf5: `SLy_NQT.h5` (NQT format), `SLy_T0.1_beta.h5` (1D temperature slice), `SLy.h5` (full 3D table)
 - lorene: `SLy_T0.1_beta.lorene` (1D temperature slice in Lorene format), `SLy_T0.1_beta_Y.out` (table with the number fractions)
+- elliptica: `SLy_compose.txt` (1D temperature slice in elliptica CompOSE format), `SLy_geometric.txt` (1D temperature slice in elliptica geometric units format)
 
 The NQT table is created directly from the table in memory, so `--nqt` writes it in whichever of the `--hdf5` and `--athtab` formats are enabled.
 
@@ -98,4 +102,4 @@ md = Metadata(
 )
 ```
 
-Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the EoS under consideration. Also, based on the utility of PyCompOSE, only `.h5`, `.athtab`, and `.lorene` formats are supported, which work with a multitude of codes.
+Which species are considered in a given EoS, can be found out in the `eos.pdf` summary on the CompOSE website of the EoS under consideration. Also, based on the utility of PyCompOSE, only `.h5`, `.athtab`, `.lorene`, and elliptica table formats are supported, which work with a multitude of codes.

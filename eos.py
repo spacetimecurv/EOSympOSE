@@ -139,12 +139,17 @@ def as_species(entries: dict) -> dict:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Download and process EOS data")
     parser.add_argument("--output_dir", type=Path, help="Base directory where folders will be created")
+    parser.add_argument("--download", action=argparse.BooleanOptionalAction, default=True, help="Whether to download the CompOSE data")
     parser.add_argument("--eos_name", type=str, help="Name of the equation of state as listed in the configuration file (e.g. SLy, SFHo, DD2)")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help=f"JSON file with the EoS definitions (default: {DEFAULT_CONFIG})")
     parser.add_argument("--list_eos", action="store_true", help="List the EoSs available in the configuration file and exit")
     parser.add_argument("--hdf5", action="store_true", help="Enable HDF5 output")
     parser.add_argument("--athtab", action="store_true", help="Enable AthenaK table output")
     parser.add_argument("--lorene", action="store_true", help="Enable Lorene table output")
+    parser.add_argument("--elliptica", action="store_true", help="Enable Elliptica table output")
+    parser.add_argument("--elliptica_format", type=str, default="compose", choices=["compose", "geometric"],
+                        help="Which format the Elliptica table takes")
+    parser.add_argument("--elliptica_dcut", type=float, default=-1.0, help="Density cut on the Elliptica tables")
     parser.add_argument("--eos_cold", action="store_true", help="Enable cold EoS table output")
     parser.add_argument("--nqt", action="store_true", help="Enable NQT output")
     args = parser.parse_args()
@@ -171,6 +176,10 @@ if __name__ == '__main__':
         sys.exit(f"EoS {eos_name} is not listed in {args.config}. Available: {', '.join(config)}.")
     settings = config[eos_name]
 
+    # ID guards
+    if (args.elliptica or args.lorene) and not args.eos_cold:
+        raise ValueError("Lorene/Elliptica EOS format requires --eos_cold!")
+
     ######################
     # PATHS
     ######################
@@ -194,6 +203,10 @@ if __name__ == '__main__':
         lorene_path = Path(os.path.join(eos_path, "lorene"))
         create_directory(lorene_path)
 
+    if args.elliptica: # Elliptica directory
+        elliptica_path = Path(os.path.join(eos_path, "elliptica"))
+        create_directory(elliptica_path)
+
     ######################
     # DATA
     ######################
@@ -202,20 +215,31 @@ if __name__ == '__main__':
     # https://compose.obspm.fr/eos/141, so the ID is 141. The folder holding the
     # files is then looked up on that webpage, so that no download URL has to be
     # copied by hand.
-    compose_url = complete_compose_url(str(settings["id"]))
     compose_path = Path(os.path.join(eos_path, "compose"))
-    create_directory(compose_path) # create the folder with the compose data
+    if args.download:
+        compose_url = complete_compose_url(str(settings["id"]))
+        create_directory(compose_path) # create the folder with the compose data
 
-    # check whether there is already data present, otherwise fetch data
-    has_files = any(compose_path.iterdir())
-    if has_files:
-        for file in compose_path.iterdir():  # iterates over all entries
-            if file.is_file():               # only delete files, not subdirs
-                file.unlink()
+        # check whether there is already data present, otherwise fetch data
+        has_files = any(compose_path.iterdir())
+        if has_files:
+            for file in compose_path.iterdir():  # iterates over all entries
+                if file.is_file():               # only delete files, not subdirs
+                    file.unlink()
 
-    compose_name, dl_url = get_compose_download_url(compose_url)
-    print(f"\nDownloading {compose_name} from {compose_url}")
-    get_compose_data(dl_url, eos_path) # fetch the data
+        compose_name, dl_url = get_compose_download_url(compose_url)
+        print(f"\nDownloading {compose_name} from {compose_url}")
+        get_compose_data(dl_url, eos_path) # fetch the data
+    else:
+        if not os.path.exists(compose_path):
+            raise ValueError("--download is false, but the 'compose' folder " \
+                             "does not exist!")
+        else:
+            for file in os.listdir(compose_path):
+                if file in COMPOSE_FILES:
+                    continue
+                else:
+                    raise ValueError(f"File '{file}' is missing in the compose folder!")
 
     ######################
     # EOS
@@ -258,6 +282,11 @@ if __name__ == '__main__':
             eos_cold.write_lorene(lorene_path / f"{eos_name}_T0.1_beta.lorene")
             eos_cold.write_number_fractions(lorene_path / f"{eos_name}_T0.1_beta_Y.out")
         if args.athtab: eos_cold.write_athtab(athtab_path / f"{eos_name}_T0.1_beta.athtab")
+        if args.elliptica:
+            if args.elliptica_format == "compose":
+                eos_cold.write_elliptica_compose(elliptica_path / f"{eos_name}_compose.txt", args.elliptica_dcut)
+            if args.elliptica_format == "geometric":
+                eos_cold.write_elliptica_geometric(elliptica_path / f"{eos_name}_geometric.txt", args.elliptica_dcut)
 
     # NQT format
     if args.nqt:
