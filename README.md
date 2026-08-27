@@ -1,20 +1,28 @@
 # EOSympOSE
 EOSympOSE is an easy-to-use extension of PyCompOSE (https://github.com/computationalrelativity/PyCompOSE), which is used to convert CompOSE (https://compose.obspm.fr/home/) equations of state into readable format for numerical relativity codes and initial data solvers.
-
 EOSympOSE will automatically fetch the respective data from the CompOSE database and use the PyCompOSE tools to convert the data to the desired format. Examples for this also exists on the PyCompOSE repository, but here they are automatized for easy use-case and without downloading the data manually.
 
 ## Setting up PyCompOSE
-Before using the scripts in this repository, the PyCompOSE utilities have to be cloned from https://github.com/computationalrelativity/PyCompOSE via:
 
-```git clone https://github.com/computationalrelativity/PyCompOSE```
+When cloning EOSympOSE with
 
-To use all of the functionalities, such as NQTs, we have to make use of `setup.py` to build the NQT library. To do so, type the following inside of the root directory of PyCompOSE:
+```bash
+git clone https://github.com/spacetimecurv/EOSympOSE.git
+```
 
-```pip install -e .```
+PyCompOSE will automatically be added as a submodule. Depending on whether you clone with ssh or https, you might have to run
 
-This will build the library and enables all the functionality we might need. Lastly, inside of the PyCompOSE root directory, create a folder called `scripts` or whatever other name you like. After changing into the `scripts` folder, clone the EOSympOSE repository by typing:
+```bash
+git submodule update --init --recursive
+```
 
-```git clone https://github.com/spacetimecurv/EOSympOSE.git```
+in the EOSympOSE root folder. To then build EOSympOSE and PyCompOSE run
+
+```bash
+pip install -e external/PyCompOSE -e .
+```
+
+This will build the library and enables all the functionality we might need.
 
 ## Usage
 There is a single script, `eos.py`, which works for every EoS. Everything that is specific to an EoS (the CompOSE ID and the particle species entering the metatable) is not hardcoded, but read from the configuration file `eos_config.json`. For running, you have some options:
@@ -34,11 +42,15 @@ There is a single script, `eos.py`, which works for every EoS. Everything that i
 
 To see which EoSs are currently defined, type:
 
-```python eos.py --list_eos```
+```bash
+python eos.py --list_eos
+```
 
 If you desire the entire output, that is possible, the command would look like:
 
-```python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt --elliptica --elliptica_format compose --elliptica_dcut -1.0```
+```bash
+python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt --elliptica --elliptica_format compose --elliptica_dcut -1.0
+```
 
 This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `athtab` (holding the converted tables to .athtab format), `hdf5` (holding the converted tables to .h5 format), `lorene` (holding the converted tables to .lorene format and number fractions), and `elliptica` (holding the elliptica tables).
 

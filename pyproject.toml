@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eosympose"
+version = "0.1.0"
+description = "Fetch CompOSE equations of state and convert them into formats read by numerical relativity codes and initial data solvers"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-3.0-or-later" }
+dependencies = [
+    "requests",
+    "numpy",
+    "scipy",
+    "h5py",
+    "astropy",
+]
+
+[project.optional-dependencies]
+tov = ["bilby"]
+plots = ["matplotlib"]
+
+[project.urls]
+Homepage = "https://github.com/spacetimecurv/EOSympOSE"
+PyCompOSE = "https://github.com/computationalrelativity/PyCompOSE"
+
+[tool.setuptools]
+packages = []
+py-modules = []
