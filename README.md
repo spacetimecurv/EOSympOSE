@@ -25,11 +25,11 @@ pip install -e external/PyCompOSE -e .
 This will build the library and enables all the functionality we might need.
 
 ## Usage
-There is a single script, `eos.py`, which works for every EoS. Everything that is specific to an EoS (the CompOSE ID and the particle species entering the metatable) is not hardcoded, but read from the configuration file `eos_config.json`. For running, you have some options:
+There is a single script, `eosympose.py`, which works for every EoS. Everything that is specific to an EoS (the CompOSE ID and the particle species entering the metatable) is not hardcoded, but read from the configuration file `eos_config.json`. For running, you have some options:
 
 - eos_name: the name of the EoS as listed in the configuration file, also used for naming the files and directory (required)
 - output_dir: the path to the directory, where the converted files and the CompOSE data are supposed to be stored (required)
-- config: path to the JSON file holding the EoS definitions (`eos_config.json` next to `eos.py`, if not specified)
+- config: path to the JSON file holding the EoS definitions (`eos_config.json` next to `eosympose.py`, if not specified)
 - list_eos: list the EoSs available in the configuration file and exit
 - hdf5: flag for hdf5 output (false, if not specified)
 - athtab: flag for athtab output (false, if not specified)
@@ -43,13 +43,13 @@ There is a single script, `eos.py`, which works for every EoS. Everything that i
 To see which EoSs are currently defined, type:
 
 ```bash
-python eos.py --list_eos
+python eosympose.py --list_eos
 ```
 
 If you desire the entire output, that is possible, the command would look like:
 
 ```bash
-python eos.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt --elliptica --elliptica_format compose --elliptica_dcut -1.0
+python eosympose.py --eos_name SLy --output_dir /path/to/dir --hdf5 --athtab --lorene --eos_cold --nqt --elliptica --elliptica_format compose --elliptica_dcut -1.0
 ```
 
 This will first create a base folder under `/path/to/dir/SLy`, as well as four folders inside of the base directory, which are `compose` (holding the CompOSE data), `athtab` (holding the converted tables to .athtab format), `hdf5` (holding the converted tables to .h5 format), `lorene` (holding the converted tables to .lorene format and number fractions), and `elliptica` (holding the elliptica tables).
@@ -83,15 +83,15 @@ The NQT table is created directly from the table in memory, so `--nqt` writes it
 
 ## Using it from Python
 
-The same workflow is available as a function, so that `eos.py` can be driven from
+The same workflow is available as a function, so that `eosympose.py` can be driven from
 another program instead of the command line. After installing the package, the
 module is importable and `run()` takes the options above as keyword arguments,
 with the same defaults as the flags:
 
 ```python
-import eos
+import eosympose
 
-eos_path = eos.run(eos_name="SLy", output_dir="/path/to/dir",
+eos_path = eosympose.run(eos_name="SLy", output_dir="/path/to/dir",
                    hdf5=True, athtab=True, eos_cold=True,
                    elliptica=True, elliptica_format="compose",
                    elliptica_dcut=-1.0)
