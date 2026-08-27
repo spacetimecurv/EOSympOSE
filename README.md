@@ -119,8 +119,8 @@ CompOSE data raise `ValueError`, a configuration file that does not exist raises
 `FileNotFoundError`. The EoSs of a configuration file can be listed with
 
 ```python
-config = eos.read_config(eos.DEFAULT_CONFIG)
-eos.list_eos(config)
+config = eosympose.read_config(eos.DEFAULT_CONFIG)
+eosympose.list_eos(config)
 ```
 
 ## Other EoSs and data formats
