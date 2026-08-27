@@ -110,7 +110,7 @@ come from a configuration of their own:
 ```python
 options = {"eos_name": "DD2", "output_dir": "/path/to/dir",
            "hdf5": True, "eos_cold": True}
-eos.run(**options)
+eosympose.run(**options)
 ```
 
 Errors are raised instead of exiting: an unknown EoS, an incompatible
