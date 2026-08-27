@@ -10,7 +10,7 @@ When cloning EOSympOSE with
 git clone https://github.com/spacetimecurv/EOSympOSE.git
 ```
 
-PyCompOSE will automatically be added as a submodule. Depending on whether you clone with ssh or https, you might have to run
+PyCompOSE will automatically be added as a submodule. You might have to run
 
 ```bash
 git submodule update --init --recursive
