@@ -1,3 +1,3 @@
 [submodule "external/PyCompOSE"]
 	path = external/PyCompOSE
-	url = git@github.com:computationalrelativity/PyCompOSE.git
+	url = ../../computationalrelativity/PyCompOSE.git
