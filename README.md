@@ -81,6 +81,48 @@ If all options were enabled, you will see the following files in the respective 
 The NQT table is created directly from the table in memory, so `--nqt` writes it in whichever of the `--hdf5` and `--athtab` formats are enabled.
 
 
+## Using it from Python
+
+The same workflow is available as a function, so that `eos.py` can be driven from
+another program instead of the command line. After installing the package, the
+module is importable and `run()` takes the options above as keyword arguments,
+with the same defaults as the flags:
+
+```python
+import eos
+
+eos_path = eos.run(eos_name="SLy", output_dir="/path/to/dir",
+                   hdf5=True, athtab=True, eos_cold=True,
+                   elliptica=True, elliptica_format="compose",
+                   elliptica_dcut=-1.0)
+```
+
+`run()` returns the path of the EoS folder it created, so that the converted
+tables can be picked up afterwards:
+
+```python
+table = eos_path / "elliptica" / "SLy_compose.txt"
+```
+
+The options can be collected in a dictionary as well, which is handy when they
+come from a configuration of their own:
+
+```python
+options = {"eos_name": "DD2", "output_dir": "/path/to/dir",
+           "hdf5": True, "eos_cold": True}
+eos.run(**options)
+```
+
+Errors are raised instead of exiting: an unknown EoS, an incompatible
+combination of outputs (Elliptica or Lorene without `eos_cold`) or missing
+CompOSE data raise `ValueError`, a configuration file that does not exist raises
+`FileNotFoundError`. The EoSs of a configuration file can be listed with
+
+```python
+config = eos.read_config(eos.DEFAULT_CONFIG)
+eos.list_eos(config)
+```
+
 ## Other EoSs and data formats
 Currently, the SLy, DD2, and SFHo EoS are defined in `eos_config.json`. If you wish to convert other CompOSE tables not listed there, then no just add another entry to the configuration file, with the CompOSE ID of the table and the particle species of the metatable. The keys of an entry are:
 

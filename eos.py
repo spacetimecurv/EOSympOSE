@@ -101,7 +101,7 @@ def read_config(config_path: Path) -> dict:
         dictionary mapping the EoS key to its settings
     '''
     if not os.path.isfile(config_path):
-        sys.exit(f"Configuration file {config_path} does not exist.")
+        raise FileNotFoundError(f"Configuration file {config_path} does not exist.")
 
     with open(config_path, "r") as f:
         return json.load(f)
@@ -120,7 +120,16 @@ def as_species(entries: dict) -> dict:
     '''
     return {int(index): tuple(value) for index, value in entries.items()}
 
-if __name__ == '__main__':
+
+def build_parser() -> argparse.ArgumentParser:
+    '''
+    Builds the command line interface. The defaults defined here are mirrored by
+    the keyword arguments of run(), so that calling the script and importing it
+    behave the same way.
+
+    Returns:
+        the argument parser of the script
+    '''
     parser = argparse.ArgumentParser(description="Download and process EOS data")
     parser.add_argument("--output_dir", type=Path, help="Base directory where folders will be created")
     parser.add_argument("--download", action=argparse.BooleanOptionalAction, default=True, help="Whether to download the CompOSE data")
@@ -136,58 +145,100 @@ if __name__ == '__main__':
     parser.add_argument("--elliptica_dcut", type=float, default=-1.0, help="Density cut on the Elliptica tables")
     parser.add_argument("--eos_cold", action="store_true", help="Enable cold EoS table output")
     parser.add_argument("--nqt", action="store_true", help="Enable NQT output")
-    args = parser.parse_args()
+    return parser
 
+def list_eos(config: dict, config_path: Path = DEFAULT_CONFIG) -> None:
+    '''
+    Prints the EoSs defined in a configuration file together with the CompOSE
+    webpage they are fetched from.
+
+    Args:
+        config: dictionary of EoS settings, as returned by read_config()
+        config_path: path the configuration was read from, only used for the print
+
+    Returns:
+        None
+    '''
+    print(f"EoSs available in {config_path}:")
+    for name, settings in config.items():
+        print(f"  {name}: {complete_compose_url(str(settings['id']))}")
+
+def run(eos_name: str,
+        output_dir: str,
+        config: Path = DEFAULT_CONFIG,
+        download: bool = True,
+        hdf5: bool = False,
+        athtab: bool = False,
+        lorene: bool = False,
+        elliptica: bool = False,
+        elliptica_format: str = "compose",
+        elliptica_dcut: float = -1.0,
+        eos_cold: bool = False,
+        nqt: bool = False) -> Path:
+    '''
+    Fetches a CompOSE table and converts it into the requested formats.
+
+    Args:
+        eos_name: name of the EoS as listed in the configuration file
+        output_dir: base directory, the folder <output_dir>/<eos_name> is created
+        config: JSON file holding the EoS definitions
+        download: whether to fetch the CompOSE data, or reuse an existing 'compose' folder
+        hdf5, athtab, lorene, elliptica, eos_cold, nqt: which outputs to write
+        elliptica_format: 'compose' or 'geometric', only used with elliptica
+        elliptica_dcut: density cut of the Elliptica table, only used with elliptica
+
+    Returns:
+        path of the EoS folder holding the 'compose', 'athtab', 'hdf5', 'lorene'
+        and 'elliptica' sub-directories that were requested
+
+    Raises:
+        ValueError: on an unknown EoS, an incompatible combination of outputs or
+            missing CompOSE data
+        FileNotFoundError: if the configuration file does not exist
+    '''
     ######################
     # CONFIGURATION
     ######################
     # The EoS specific settings (CompOSE ID and the species of the metatable) are
-    # read from the configuration file, so that this script works for every EoS
-    # listed in there.
-    config = read_config(args.config)
+    # read from the configuration file, so that this works for every EoS listed
+    # in there.
+    config_path = Path(config)
+    settings = read_config(config_path)
 
-    if args.list_eos:
-        print(f"EoSs available in {args.config}:")
-        for name, settings in config.items():
-            print(f"  {name}: {complete_compose_url(str(settings['id']))}")
-        sys.exit(0)
-
-    if args.eos_name is None or args.output_dir is None:
-        parser.error("--eos_name and --output_dir are required (use --list_eos to see the available EoSs).")
-
-    eos_name = args.eos_name
-    if eos_name not in config:
-        sys.exit(f"EoS {eos_name} is not listed in {args.config}. Available: {', '.join(config)}.")
-    settings = config[eos_name]
+    if eos_name not in settings:
+        raise ValueError(f"EoS {eos_name} is not listed in {config_path}. "
+                         f"Available: {', '.join(settings)}.")
+    settings = settings[eos_name]
 
     # ID guards
-    if (args.elliptica or args.lorene) and not args.eos_cold:
-        raise ValueError("Lorene/Elliptica EOS format requires --eos_cold!")
+    if (elliptica or lorene) and not eos_cold:
+        raise ValueError("Lorene/Elliptica EOS format requires eos_cold!")
 
     ######################
     # PATHS
     ######################
     # Here, we specify the paths to the EoS folder that gets created, as well
     # as the sub-directories.
-    if os.path.isdir(args.output_dir): base_path = args.output_dir
+    base_path = Path(output_dir).expanduser()
+    os.makedirs(base_path, exist_ok=True)
     print(f"Directory Path for EoS {eos_name}:", base_path)
     eos_path = Path(os.path.join(base_path, eos_name)) # full path to EoS folder
 
     create_directory(eos_path) # create the EoS directory
 
-    if args.athtab: # athtab directory
+    if athtab: # athtab directory
         athtab_path = Path(os.path.join(eos_path, "athtab"))
         create_directory(athtab_path)
 
-    if args.hdf5: # hdf5 directory
+    if hdf5: # hdf5 directory
         hdf5_path = Path(os.path.join(eos_path, "hdf5"))
         create_directory(hdf5_path)
 
-    if args.lorene: # Lorene directory
+    if lorene: # Lorene directory
         lorene_path = Path(os.path.join(eos_path, "lorene"))
         create_directory(lorene_path)
 
-    if args.elliptica: # Elliptica directory
+    if elliptica: # Elliptica directory
         elliptica_path = Path(os.path.join(eos_path, "elliptica"))
         create_directory(elliptica_path)
 
@@ -200,7 +251,7 @@ if __name__ == '__main__':
     # files is then looked up on that webpage, so that no download URL has to be
     # copied by hand.
     compose_path = Path(os.path.join(eos_path, "compose"))
-    if args.download:
+    if download:
         compose_url = complete_compose_url(str(settings["id"]))
         create_directory(compose_path) # create the folder with the compose data
 
@@ -216,7 +267,7 @@ if __name__ == '__main__':
         get_compose_data(dl_url, eos_path) # fetch the data
     else:
         if not os.path.exists(compose_path):
-            raise ValueError("--download is false, but the 'compose' folder " \
+            raise ValueError("download is false, but the 'compose' folder " \
                              "does not exist!")
         else:
             for file in os.listdir(compose_path):
@@ -250,33 +301,67 @@ if __name__ == '__main__':
 
     # %%
     print("\nWriting EoS files from compose data...")
-    if args.hdf5: eos.write_hdf5(hdf5_path / f"{eos_name}.h5")
-    if args.athtab: eos.write_athtab(athtab_path / f"{eos_name}.athtab")
+    if hdf5: eos.write_hdf5(hdf5_path / f"{eos_name}.h5")
+    if athtab: eos.write_athtab(athtab_path / f"{eos_name}.athtab")
 
     # %% Take the lowest T slice of the EOS
-    eos_cold = eos.slice_at_t_idx(0)
+    eos_cold_table = eos.slice_at_t_idx(0)
     # %% Find beta equilibrium
-    eos_cold = eos_cold.make_beta_eq_table()
+    eos_cold_table = eos_cold_table.make_beta_eq_table()
 
     # cold EoS output
-    if args.eos_cold:
+    if eos_cold:
         print("Writing cold beta-equilibrium EoS files...")
-        if args.hdf5: eos_cold.write_hdf5(hdf5_path / f"{eos_name}_T0.1_beta.h5")
-        if args.lorene:
-            eos_cold.write_lorene(lorene_path / f"{eos_name}_T0.1_beta.lorene")
-            eos_cold.write_number_fractions(lorene_path / f"{eos_name}_T0.1_beta_Y.out")
-        if args.athtab: eos_cold.write_athtab(athtab_path / f"{eos_name}_T0.1_beta.athtab")
-        if args.elliptica:
-            if args.elliptica_format == "compose":
-                eos_cold.write_elliptica_compose(elliptica_path / f"{eos_name}_compose.txt", args.elliptica_dcut)
-            if args.elliptica_format == "geometric":
-                eos_cold.write_elliptica_geometric(elliptica_path / f"{eos_name}_geometric.txt", args.elliptica_dcut)
+        if hdf5: eos_cold_table.write_hdf5(hdf5_path / f"{eos_name}_T0.1_beta.h5")
+        if lorene:
+            eos_cold_table.write_lorene(lorene_path / f"{eos_name}_T0.1_beta.lorene")
+            eos_cold_table.write_number_fractions(lorene_path / f"{eos_name}_T0.1_beta_Y.out")
+        if athtab: eos_cold_table.write_athtab(athtab_path / f"{eos_name}_T0.1_beta.athtab")
+        if elliptica:
+            if elliptica_format == "compose":
+                eos_cold_table.write_elliptica_compose(elliptica_path / f"{eos_name}_compose.txt", elliptica_dcut)
+            if elliptica_format == "geometric":
+                eos_cold_table.write_elliptica_geometric(elliptica_path / f"{eos_name}_geometric.txt", elliptica_dcut)
 
     # NQT format
-    if args.nqt:
+    if nqt:
         print("Writing EoS NQT output...")
         eos_NQT = eos.make_NQT_version()
-        if args.athtab:
+        if athtab:
             eos_NQT.write_athtab(athtab_path / f"{eos_name}_NQT.athtab")
-        if args.hdf5:
+        if hdf5:
             eos_NQT.write_hdf5(hdf5_path / f"{eos_name}_NQT.h5")
+
+    return eos_path
+
+def main(argv: list = None) -> int:
+    '''
+    Command line entry point. Parses the arguments and hands them to run().
+
+    Args:
+        argv: arguments to parse, sys.argv[1:] if not given
+
+    Returns:
+        exit code of the script
+    '''
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.list_eos:
+        list_eos(read_config(args.config), args.config)
+        return 0
+
+    if args.eos_name is None or args.output_dir is None:
+        parser.error("--eos_name and --output_dir are required (use --list_eos to see the available EoSs).")
+
+    options = vars(args)
+    options.pop("list_eos")
+
+    try:
+        run(**options)
+    except (FileNotFoundError, ValueError, RuntimeError) as error:
+        sys.exit(str(error))
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

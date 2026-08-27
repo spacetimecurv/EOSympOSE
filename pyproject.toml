@@ -27,4 +27,4 @@ PyCompOSE = "https://github.com/computationalrelativity/PyCompOSE"
 
 [tool.setuptools]
 packages = []
-py-modules = []
+py-modules = ["eos"]
